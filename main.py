@@ -1,18 +1,25 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from dotenv import load_dotenv
 import os
 import requests
 import redis
 import json
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 load_dotenv()
 app = FastAPI()
 API_KEY = os.getenv("WEATHER_API_KEY")
 REDIS_URL = os.getenv("REDIS_URL")
-
 r = redis.from_url(REDIS_URL)
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter 
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 @app.get("/weather/{city}")
-def get_weather(city: str):
+@limiter.limit("10/minute")
+def get_weather(request:Request, city: str):
     url = f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/weatherdata/forecast?locations={city},VA,20170&aggregateHours=24&forecastDays=5&unitGroup=us&shortColumnNames=false&contentType=json&key={API_KEY}"
     try:
         cached = r.get(city)
