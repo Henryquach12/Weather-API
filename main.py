@@ -20,7 +20,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 @app.get("/weather/{city}")
 @limiter.limit("10/minute")
 def get_weather(request:Request, city: str):
-    url = f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/weatherdata/forecast?locations={city},VA,20170&aggregateHours=24&forecastDays=5&unitGroup=us&shortColumnNames=false&contentType=json&key={API_KEY}"
+    url = f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/weatherdata/forecast?locations={city}&aggregateHours=24&forecastDays=5&unitGroup=us&shortColumnNames=false&contentType=json&key={API_KEY}"
     try:
         cached = r.get(city)
     except Exception:
